@@ -1,8 +1,9 @@
 
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster
+
 resource "google_container_cluster" "primary" {
   name                     = "primary"
-  location                 = "us-central1-a"
+  location                 =  var.region
   remove_default_node_pool = true
   initial_node_count       = 1
   network                  = google_compute_network.main.self_link
@@ -12,9 +13,9 @@ resource "google_container_cluster" "primary" {
   networking_mode          = "VPC_NATIVE"
 
   # Optional, if you want multi-zonal cluster
-  node_locations = [
-    "us-central1-b"
-  ]
+  //node_locations = [
+  //  "us-central1-b"
+  //]
 
   addons_config {
     http_load_balancing {
@@ -34,8 +35,8 @@ resource "google_container_cluster" "primary" {
   }
 
   ip_allocation_policy {
-    cluster_secondary_range_name  = "k8s-pod-range"
-    services_secondary_range_name = "k8s-service-range"
+    cluster_secondary_range_name  = google_compute_subnetwork.PrivateSubnet.secondary_ip_range[0].range_name
+    services_secondary_range_name = google_compute_subnetwork.PrivateSubnet.secondary_ip_range[1].range_name
   }
 
   private_cluster_config {
@@ -51,4 +52,6 @@ resource "google_container_cluster" "primary" {
   #       display_name = "private-subnet-w-jenkins"
   #     }
   #   }
+
+  depends_on = [ google_compute_network.main, google_compute_subnetwork.PrivateSubnet]
 }
